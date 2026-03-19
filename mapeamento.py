@@ -7,9 +7,7 @@ from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
-# =========================================================
 # FEATURES IMPORTANTES
-# =========================================================
 # def selecionar_features(df):
 
 #     features = [
@@ -31,29 +29,29 @@ from sklearn.decomposition import PCA
 def selecionar_features(df):
 
     features = [
-        # -------------------------
+
         # PAISAGEM (estrutura)
-        # -------------------------
+
         "land_ED",      # fragmentação (ESSENCIAL)
         "land_NP",      # número de fragmentos
         "land_LPI",     # dominância
 
-        # -------------------------
+
         # USO DO SOLO (resumido)
-        # -------------------------
+
         "cls_1_PLAND",  # floresta primária
         "cls_6_PLAND",  # floresta secundária
 
-        # -------------------------
+
         # ACESSO
-        # -------------------------
+
         "dist_m_estrada",
         "dist_m_hidrografia",
         "dist_m_mineracao",
 
-        # -------------------------
+
         # PRESSÃO HUMANA
-        # -------------------------
+
         "built_mean",
         "pop_mean"
     ]
@@ -78,9 +76,7 @@ def selecionar_features(df):
     return df, features
 
 
-# =========================================================
 # CLUSTERIZAÇÃO
-# =========================================================
 # def rodar_cluster(df, features, n_clusters=5):
 
 #     scaler = StandardScaler()
@@ -100,15 +96,11 @@ def selecionar_features(df):
 
 def rodar_cluster(df, features, n_clusters=5):
 
-    # -------------------------
     # ESCALAR
-    # -------------------------
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(df[features])
 
-    # -------------------------
     # PCA (redução de dimensionalidade)
-    # -------------------------
     pca = PCA(n_components=5)  # você pode testar 3–8
     X_pca = pca.fit_transform(X_scaled)
 
@@ -116,9 +108,7 @@ def rodar_cluster(df, features, n_clusters=5):
     print(pca.explained_variance_ratio_)
     print("Total:", pca.explained_variance_ratio_.sum())
 
-    # -------------------------
     # CLUSTER
-    # -------------------------
     model = KMeans(
         n_clusters=n_clusters,
         random_state=42,
@@ -129,9 +119,7 @@ def rodar_cluster(df, features, n_clusters=5):
 
     return df, model
 
-# =========================================================
 # ROTULAR CLUSTERS (INTELIGENTE)
-# =========================================================
 def rotular_clusters(df):
 
     # pegar apenas colunas numéricas
@@ -164,9 +152,7 @@ def rotular_clusters(df):
 
     return df, summary
 
-# =========================================================
 # VISUALIZAÇÃO
-# =========================================================
 def plotar(gdf):
 
     fig, ax = plt.subplots(figsize=(12, 10))
@@ -183,9 +169,7 @@ def plotar(gdf):
     plt.show()
 
 
-# =========================================================
 # PIPELINE
-# =========================================================
 def run_mapping(csv_path, grid_path, out_path):
 
     print("\n[ETAPA 4] Clusterização de vulnerabilidade")
@@ -193,39 +177,27 @@ def run_mapping(csv_path, grid_path, out_path):
     df = pd.read_csv(csv_path)
     grid = gpd.read_file(grid_path)
 
-    # -------------------------
     # FEATURES
-    # -------------------------
     df, features = selecionar_features(df)
 
-    # -------------------------
     # CLUSTER
-    # -------------------------
     df, model = rodar_cluster(df, features, n_clusters=5)
 
-    # -------------------------
     # ROTULAR
-    # -------------------------
     df, summary = rotular_clusters(df)
 
     print("\nResumo dos clusters:")
     print(summary)
 
-    # -------------------------
     # GEO
-    # -------------------------
     gdf = grid.merge(df, left_index=True, right_index=True)
 
-    # -------------------------
     # SALVAR
-    # -------------------------
     gdf.to_file(out_path, driver="GPKG")
 
     print(f"\nMapa salvo em: {out_path}")
 
-    # -------------------------
     # PLOT
-    # -------------------------
     plotar(gdf)
 
     return gdf

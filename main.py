@@ -168,15 +168,55 @@ def main():
     print("PIPELINE GEOESPACIAL")
     print("=" * 80)
 
-    gerar_grade()
-    extrair_metricas()
-    validar_metricas()
-    # ETAPA 4 — MAPEAMENTO
-    run_mapping(
-    csv_path=OUT_PATH,
-    grid_path=GRADE_PATH,
-    out_path="mapa_cluster.gpkg"
-)
+    try:
+        print("\n[1/4] Gerando grade...")
+        gerar_grade()
+        print("[OK] Grade gerada com sucesso.")
+
+    except Exception as e:
+        print("[ERRO] Falha ao gerar grade.")
+        print("Detalhes:", e)
+        return
+
+    try:
+        print("\n[2/4] Extraindo métricas da paisagem...")
+        extrair_metricas()
+        print("[OK] Métricas extraídas com sucesso.")
+
+    except Exception as e:
+        print("[ERRO] Falha na extração de métricas.")
+        print("Detalhes:", e)
+        return
+
+    try:
+        print("\n[3/4] Validando métricas...")
+        validar_metricas()
+        print("[OK] Métricas validadas.")
+
+    except Exception as e:
+        print("[ERRO] Falha na validação das métricas.")
+        print("Detalhes:", e)
+        return
+
+    try:
+        print("\n[4/4] Gerando mapa de clusters...")
+        print("CSV:", OUT_PATH)
+        print("GRID:", GRADE_PATH)
+        print("OUTPUT:", "mapa_cluster.gpkg")
+
+        run_mapping(
+            csv_path=OUT_PATH,
+            grid_path=GRADE_PATH,
+            out_path="mapa_cluster.gpkg"
+        )
+
+        print("[OK] Mapa gerado com sucesso.")
+
+    except Exception as e:
+        print("[ERRO] Falha na geração do mapa.")
+        print("Detalhes:", e)
+        return
+
     print("\nPipeline finalizado com sucesso.")
 
 
