@@ -2,20 +2,11 @@ import math
 import numpy as np
 from rasterio.features import rasterize
 import rasterio.transform
-import warnings
 import traceback
+from metricas.calculo_metricas import compute_metrics
 
-# Ignorar warnings para manter saída limpa
-warnings.filterwarnings("ignore")
-
-# Importações de configurações e utilitários personalizados
-from calculo_metricas import compute_metrics
-
-
-# ---------------- FUNÇÃO DE PROCESSAMENTO DE CÉLULA ----------------
 def process_cell(i, cell_geom, layer_gdfs, class_map, resolution):
-    """
-    Processa uma célula individual da grade, rasterizando as camadas e calculando métricas.
+    """ Processa uma célula individual da grade, rasterizando as camadas e calculando métricas.
     
     Args:
         i (int): Índice da célula
@@ -25,8 +16,7 @@ def process_cell(i, cell_geom, layer_gdfs, class_map, resolution):
         resolution (float): Resolução espacial do raster em unidades do CRS
     
     Returns:
-        dict: Dicionário com métricas calculadas e status do processamento
-    """
+        dict: Dicionário com métricas calculadas e status do processamento"""
     print(f"\n[DEBUG Célula {i}] Iniciando processamento...")
     
     # Obter bounding box da célula
