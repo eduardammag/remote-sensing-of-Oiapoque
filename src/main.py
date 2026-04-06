@@ -2,7 +2,7 @@ from src.config import (GRADE_PATH, OUTDIR)
 from src.grade_celular.geracao_grade import gerar_grade
 from src.metricas.extrair_metricas import extrair_metricas
 from src.metricas.verificacao_metricas import validar_metricas
-from src.mapeamento.kmeans_pca import run_clusters
+from src.mapeamento.c5_boost import run_c5_boost
 
 
 # MAIN
@@ -24,7 +24,10 @@ def main():
     print("[OK] Métricas validadas.")
 
     print("\n[4/4] Gerando mapa de clusters...")
-    run_clusters(csv_path= OUTDIR, grid_path= GRADE_PATH,out_path="mapa_cluster.gpkg")
+    run_c5_boost(csv_path=OUTDIR,
+                 grid_path=GRADE_PATH,
+                 out_path="mapa_classificado.gpkg",
+                 target_col="classv0")
     print("[OK] Mapa gerado com sucesso.")
 
     print("\nPipeline finalizado com sucesso.")

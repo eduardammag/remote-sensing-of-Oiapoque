@@ -205,7 +205,7 @@ def salvar_resultados(df, grade_reset):
 # PIPELINE PRINCIPAL
 # ==========================================================
 
-def run_all():
+def extrair_metricas():
 
     print("="*80)
     print("PIPELINE FRAGSTATS")
