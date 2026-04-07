@@ -3,7 +3,7 @@ import numpy as np
 from rasterio.features import rasterize
 import rasterio.transform
 import traceback
-from metricas.calculo_metricas import compute_metrics
+from src.metricas.calculo_metricas import compute_metrics
 
 def process_cell(i, cell_geom, layer_gdfs, class_map, resolution):
     """ Processa uma célula individual da grade, rasterizando as camadas e calculando métricas.

@@ -1,4 +1,4 @@
-from grade_celular.espaco_celular import load_limite, create_grid, clip_grid, save_grid, plot_grid
+from src.grade_celular.espaco_celular import load_limite, create_grid, clip_grid, save_grid, plot_grid
 
 def gerar_grade():
     print("\n[ETAPA 1] Gerando grade celular...")

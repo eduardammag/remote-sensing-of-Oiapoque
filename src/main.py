@@ -1,9 +1,11 @@
-from src.config import (GRADE_PATH, OUTDIR)
+from src.config import (CSV_PATH, CLASSES_CSV)
 from src.grade_celular.geracao_grade import gerar_grade
 from src.metricas.extrair_metricas import extrair_metricas
 from src.metricas.verificacao_metricas import validar_metricas
 from src.mapeamento.c5_boost import run_c5_boost
 
+features_csv = r"C:\Users\dudda\Downloads\remote-sensing-of-Oiapoque\output\metricas_fragstats_por_celula.csv"
+classes_csv = r"C:\Users\dudda\Downloads\remote-sensing-of-Oiapoque\input\tipologia_classificada.csv"
 
 # MAIN
 
@@ -23,11 +25,8 @@ def main():
     validar_metricas()
     print("[OK] Métricas validadas.")
 
-    print("\n[4/4] Gerando mapa de clusters...")
-    run_c5_boost(csv_path=OUTDIR,
-                 grid_path=GRADE_PATH,
-                 out_path="mapa_classificado.gpkg",
-                 target_col="classv0")
+    print("\n[4/4] Gerando a classificação...")
+    run_c5_boost(features_csv, classes_csv, target_col="classv0")
     print("[OK] Mapa gerado com sucesso.")
 
     print("\nPipeline finalizado com sucesso.")

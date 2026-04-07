@@ -1,5 +1,5 @@
 import pandas as pd
-from config import OUTDIR, EPS
+from src.config import EPS, OUTPUT_RELATORIO
 
 # CONFIGURAÇÕES
 CSV_PATH = r"output/metricas_fragstats_por_celula.csv"
@@ -111,5 +111,5 @@ def validar_metricas():
     print(df[metrics_land].corr())
 
     # -------- EXPORTAÇÃO --------
-    df.to_csv(OUTDIR, index=False)
-    print(f"\nRelatório salvo em: {OUTDIR}")
+    df.to_csv(OUTPUT_RELATORIO, index=False)
+    print(f"\nRelatório salvo em: {OUTPUT_RELATORIO}")

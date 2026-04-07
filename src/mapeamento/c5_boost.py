@@ -1,141 +1,118 @@
-""" Classificação supervisionada (C5-like + Boosting usando TODAS as features)
-    COM LOGS PARA ACOMPANHAMENTO
+"""
+Classificação supervisionada (C5-like + Boosting) usando métricas de fragstats
+e avaliando desempenho com o CSV de tipologia_classificada manualmente.
+Gera também uma imagem colorida para visualização das classes.
 """
 
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import AdaBoostClassifier
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, confusion_matrix
 
+# mapa de cores para visualização
+COLOR_MAP = {
+    "Risco_Mode": "red",
+    "Risco_Baixo": "green",
+    "Risco_Aloc": "orange",
+    "Risco_Auto": "blue"
+}
 
-def preparar_dados(df, target_col):
+def preparar_dados(df_features, df_classes, target_col):
     print("\n[ETAPA] Preparando dados...")
 
-    # cria cópia para não alterar o original
-    df = df.copy()
+    # 🔗 merge entre features e classes
+    df = df_features.merge(df_classes, on="id")  # ajuste "id" se necessário
 
-    print(f"Shape original: {df.shape}")
+    print(f"Shape após merge: {df.shape}")
 
-    # remove linhas onde a variável alvo (target) é nula
     df = df.dropna(subset=[target_col])
-    print(f"Após remover NA no target ({target_col}): {df.shape}")
 
-    # separa variáveis explicativas (X) removendo a coluna alvo
     X = df.drop(columns=[target_col])
-
-    # mantém apenas colunas numéricas (modelos do sklearn precisam disso)
     X = X.select_dtypes(include=["number"])
-    print(f"Número de features numéricas: {X.shape[1]}")
 
-    # remove colunas completamente vazias
+    X = X.replace([np.inf, -np.inf], np.nan)
     X = X.dropna(axis=1, how="all")
-    print(f"Após remover colunas vazias: {X.shape[1]} features")
 
-    # remove linhas que ainda possuem algum NA
     mask = X.notna().all(axis=1)
     X = X[mask]
     y = df.loc[mask, target_col]
 
     print(f"Shape final após limpeza: {X.shape}")
 
-    # retorna:
-    # X -> features
-    # y -> target
-    # df_limpo -> dataframe correspondente (alinhado com X)
     return X, y, df.loc[mask].copy()
 
-
-def run_c5_boost(caminho_csv, target_col="classe"):
-
+def run_c5_boost(features_csv, classes_csv, target_col="classv0"):
     print("\n===================================")
     print("INICIANDO CLASSIFICAÇÃO C5 + BOOST")
     print("===================================")
 
-    # mostra qual arquivo está sendo usado
-    print(f"\n[INFO] Lendo CSV: {caminho_csv}")
-
-    # carregar dataset
-    df = pd.read_csv(caminho_csv)
-
-    print(f"[INFO] Dataset carregado com shape: {df.shape}")
-    print(f"[INFO] Coluna alvo: {target_col}")
+    df_features = pd.read_csv(features_csv)
+    df_classes = pd.read_csv(classes_csv)
 
     # preparar dados
-    X, y, df_limpo = preparar_dados(df, target_col)
+    X, y, df_limpo = preparar_dados(df_features, df_classes, target_col)
 
-    print("\n[ETAPA] Normalização dos dados...")
-
-    # normalização (importante para boosting funcionar melhor)
+    # normalização
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
 
-    print("[OK] Dados normalizados")
+    # converte target para números
+    le = LabelEncoder()
+    y_encoded = le.fit_transform(y)
 
-    print("\n[ETAPA] Divisão treino/teste...")
-
-    # divide em treino (70%) e teste (30%)
+    # treino/teste
     X_train, X_test, y_train, y_test = train_test_split(
-        X_scaled, y,
-        test_size=0.3,
-        random_state=42,
-        stratify=y  # mantém proporção das classes
+        X_scaled, y_encoded, test_size=0.3, random_state=42, stratify=y_encoded
     )
 
-    print(f"Tamanho treino: {X_train.shape}")
-    print(f"Tamanho teste: {X_test.shape}")
+    # árvore base (C5-like)
+    base_tree = DecisionTreeClassifier(max_depth=5, min_samples_leaf=10, random_state=42)
 
-    print("\n[ETAPA] Criando modelo base (árvore)...")
+    # AdaBoost
+    model = AdaBoostClassifier(estimator=base_tree, n_estimators=100,
+                               learning_rate=0.1, random_state=42)
 
-    # árvore de decisão (aproximação do C4.5)
-    base_tree = DecisionTreeClassifier(
-        max_depth=5,          # limita profundidade (evita overfitting)
-        min_samples_leaf=10,  # mínimo de amostras por folha
-        random_state=42
-    )
-
-    print("[OK] Árvore criada")
-
-    print("\n[ETAPA] Aplicando Boosting...")
-
-    # AdaBoost = várias árvores fracas combinadas
-    model = AdaBoostClassifier(
-        estimator=base_tree,
-        n_estimators=100,   # número de árvores
-        learning_rate=0.1,
-        random_state=42
-    )
-
-    print("[OK] Boosting configurado")
-
-    print("\n[ETAPA] Treinando modelo...")
-
-    # treino do modelo
+    # treino
     model.fit(X_train, y_train)
 
-    print("[OK] Modelo treinado")
-
-    print("\n[ETAPA] Avaliação...")
-
-    # previsão no conjunto de teste
-    y_pred = model.predict(X_test)
+    # avaliação
+    y_pred_test = model.predict(X_test)
+    y_test_labels = le.inverse_transform(y_test)
+    y_pred_labels = le.inverse_transform(y_pred_test)
 
     print("\n=== RESULTADOS ===")
-    print(classification_report(y_test, y_pred))
+    print(classification_report(y_test_labels, y_pred_labels))
+    print("\nMatriz de confusão:")
+    print(confusion_matrix(y_test_labels, y_pred_labels, labels=le.classes_))
 
-    print("\n[ETAPA] Gerando predição para TODO o dataset...")
+    # predição para todo dataset
+    df_limpo["classe_predita"] = le.inverse_transform(model.predict(X_scaled))
 
-    # previsão para todo o dataset limpo
-    df_limpo["classe_predita"] = model.predict(X_scaled)
+    # salvar CSV final
+    df_limpo.to_csv(r"C:\Users\dudda\Downloads\remote-sensing-of-Oiapoque\output\metricas_com_predicao.csv", index=False)
+    print("\nCSV com predições salvo!")
 
-    print("[OK] Predição concluída")
+    # criar visualização
+    plt.figure(figsize=(12, 8))
+    colors = df_limpo["classe_predita"].map(COLOR_MAP)
+    plt.scatter(df_limpo["cell_index"], np.zeros_like(df_limpo["cell_index"]), c=colors, s=50)
+    # criar legenda
+    handles = [plt.Line2D([0], [0], marker='o', color='w', label=cls,
+                          markerfacecolor=color, markersize=10)
+               for cls, color in COLOR_MAP.items()]
+    plt.legend(handles=handles, title="Classe predita")
+    plt.title("Classificação Células - Predição")
+    plt.xlabel("cell_index")
+    plt.yticks([])
+    plt.tight_layout()
+    plt.savefig(r"C:\Users\dudda\Downloads\remote-sensing-of-Oiapoque\output\mapa_predicao.png")
+    plt.show()
+    print("Mapa de predição salvo!")
 
-    print("\n===================================")
-    print("PROCESSO FINALIZADO")
-    print("===================================")
-
-    # retorna:
-    # df_limpo -> com a coluna nova 'classe_predita'
-    # model -> modelo treinado
     return df_limpo, model
+
+

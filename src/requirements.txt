@@ -1,0 +1,10 @@
+geopandas 
+pandas 
+numpy 
+shapely 
+rasterio 
+pyproj 
+pylandstats 
+scipy 
+matplotlib 
+rtree
